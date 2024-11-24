@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Campaign {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  title           String
+  description     String
+  keywords        String[]
+  tone            Int
+  links           String[]
+  status          String   @default("active")
+  userId          String
+  superboost      Boolean  @default(false)
+  superboostParams Json?
+  posts           Post[]
+}
+
+model Post {
+  id           String              @id @default(cuid())
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  timePosted   DateTime
+  postUrl      String
+  totalLikes   Int                @default(0)
+  totalReplies Int                @default(0)
+  upvotes      Int                @default(0)
+  positive     Int                @default(0)
+  negative     Int                @default(0)
+  neutral      Int                @default(1)
+  subreddit    String
+  data         Json?
+  campaign     Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaignId   String
+  dailyStats   PostDailyTracker[]
+}
+
+model PostDailyTracker {
+  id                String   @id @default(cuid())
+  date              DateTime
+  upvotes           Int
+  engagements       Int      // Total interactions
+  newPosts          Int      // New posts in thread
+  parentEngagements Int      // Interactions with parent post
+  post              Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId            String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([postId, date])
+}
+
+model Credit {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  userId        String
+  campaignId   String?
+  expenseType   String   // credit or debit
+  creditsValue  Int
+  type          String   // superboost, new-campaign, new-login, topup, claim-code
+  description   String?
+}
